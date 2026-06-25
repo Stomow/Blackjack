@@ -1,6 +1,7 @@
 #Blackjack
 
 import random
+import sys
 
 #Define all cards
 cards = ["aceD",'twoD','threeD','fourD','fiveD','sixD','sevenD','eightD','nineD','tenD','jackD','queenD','kingD',
@@ -16,7 +17,6 @@ cardval = [1,2,3,4,5,6,7,8,9,10,10,10,10,
            1,2,3,4,5,6,7,8,9,10,10,10,10,]
 
 #Initiate empty arrays for the player and computers hands
-winner = ''
 playersHand = []
 computersHand = []
 
@@ -39,9 +39,13 @@ def readout(hand):
      
 
 
-def sequence(ans):
+def sequence(ans,endless):
+
+
+
     if ans == 'end':
-            endless == False
+        endless = False
+
     elif ans == 'hit':
         #Player draws 1 card
         playersHand.extend(pickCard(1))
@@ -51,6 +55,7 @@ def sequence(ans):
     
     
     elif ans == 'stand':
+        print('The computers hand is...')
         draw = True
 
         scoreP = getPoints(playersHand)
@@ -76,13 +81,23 @@ def sequence(ans):
                 roundOver = True
                 draw = False
             elif ((Pdiff[0] and Pdiff[1]) < (Cdiff[0] and Cdiff[1])) and (any(p <= 21 for p in scoreP)):
-                winner = 'comp'
-                roundOver = True
+                #winner = 'comp'
+                roundOver = False
                 draw = False
             elif any(o > 21 for o in scoreC):
                 winner = 'player'
                 roundOver = True
                 draw = False
+            elif scoreC[0] == 21 or scoreC[1] == 21:
+                winner='player'
+                roundOver = True
+                draw = False
+                print('BLACKJACK!')
+            elif (Pdiff[0] and Pdiff[1]) == (Cdiff[0] and Cdiff[1]):
+                draw = True
+                roundOver = False
+
+    return endless
 
             
 
@@ -122,7 +137,7 @@ def checkScore(computersHand,playersHand,draw,roundOver):
     #Assign point values for both hands
     cPoints = getPoints(computersHand)
     pPoints = getPoints(playersHand)
-
+    winner=''
     
 
 
@@ -133,21 +148,31 @@ def checkScore(computersHand,playersHand,draw,roundOver):
     elif pPoints[0] == 21 or pPoints[1] == 21:
         winner = 'play'
         roundOver = True
+    elif cPoints[0] > 21 or cPoints[1] > 21:
+        winner = 'play'
+        roundOver = True
+    elif pPoints[0] > 21 or pPoints[1] > 21:
+        winner = 'comp'
+        roundOver = True
+    else:
+        if any(p != 21 for p in pPoints) or any(c != 21 for c in cPoints):
+            roundOver = False
+            draw = True
+            if any(x > 21 for x in pPoints):
+                roundOver = True
+                draw = False
+                winner = 'comp'
+            elif any(y > 21 for y in cPoints):
+                roundOver = True
+                draw = False
+                winner = 'play' 
+        else:
+            roundOver = False
+            winner = ''
+            draw= True     
 
-    if any(p != 21 for p in pPoints) or any(c != 21 for c in cPoints):
-        roundOver = False
-        draw = True
-        if any(x > 21 for x in pPoints):
-            roundOver = True
-            draw = False
-            winner = 'comp'
-        elif any(y > 21 for y in cPoints):
-            roundOver = True
-            draw = False
-            winner = 'play'        
 
-
-    stat = [roundOver,cPoints,pPoints]
+    stat = [roundOver,cPoints,pPoints,winner]
     return stat
 
 
@@ -156,7 +181,7 @@ def checkScore(computersHand,playersHand,draw,roundOver):
 
 
 
-def playGame():
+def playGame(endless,t):
 
     #Create a hand for both the computer and player
     computersHand.extend(pickCard(1))
@@ -168,29 +193,61 @@ def playGame():
 
 
     
-    
+    blackJack = False
     roundOver = False
     draw = False
     #Checks if the round is over
-    t = getPoints(playersHand)
-    if():
+    n = getPoints(playersHand)
+    p = getPoints(computersHand)
+
+
+    #check if exact 21
+    if(n[0]==21 or n[1]==21):
+        print('BLACKJACK!')
+        print('Player wins')
         roundOver = True
+        blackJack = True
+        score=''
+    
+        
         
     while roundOver == False:
         print('---------------------------------------------------------')
         ans = input('\nWould you like to hit or stand\n')
-        sequence(ans)
+        x = sequence(ans,endless)
+        
+        if(x == False):
+            roundOver == False
+            score = ''
+            break
+        
         #Checks score and will break the loop if the round is over
         
         score = checkScore(computersHand,playersHand,draw,roundOver)
         roundOver = score[0]
     
-    if score[1] == 'comp':
-        print('Sorry you lose')
-        input('hit a button when ready')
-    elif score[1] == 'play':
-        print('You win!')
-        input('hit a button when ready')
+
+    if score != '':
+        if score[3] == 'comp':
+            if(p[0]==21 or p[1]==21):
+                print('BLACKJACK!')
+                print('Computer wins')
+                roundOver = True
+                blackJack = True
+            print('Sorry you lose')
+            input('Hit a enter when ready')
+        elif score[3] == 'play':
+            print('You win!')
+            input('Hit enter when ready')
+    elif blackJack == True:
+        input('Hit enter when ready')
+    elif(t == 'Y' and blackJack == False):
+        endless = False
+        roundOver = True
+        print('The game has been terminated')
+        print('Goodbye')
+        sys.exit()
+    
         
 
     
@@ -200,7 +257,7 @@ roundOver = False
 endless = False
 print("Hello, welcome to Blackjack!")
 t = input('Would you like to activate endless mode? Y/N \n')
-print("\nYou can type end at any given time to stop the program")
+print("\nYou can type end at any given time to stop the game")
 
 while t != 'Y' and t != 'N':
      print("Invalid input!")
@@ -209,8 +266,10 @@ while t != 'Y' and t != 'N':
 if t == 'Y':
     endless = True
     while endless == True:
-        playGame()
-        print(winner + 'wins!')
+        winner = ''
+        x = playGame(endless,t)
+        if x == False:
+            break
         print('---------------------------------------------------------')
         print('NEW ROUND!')
         print('---------------------------------------------------------')
@@ -219,5 +278,9 @@ if t == 'Y':
         playersHand = []
 
 if t == 'N':
-    playGame()
+
+    playGame(endless,t)
+    print('Thank you for playing')
+    print('Goodbye')
+    sys.exit()
 
